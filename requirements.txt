@@ -1,0 +1,4 @@
+pysimplegui
+pafy
+youtube-dl
+ffmpy
