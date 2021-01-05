@@ -3,6 +3,7 @@ import PySimpleGUI as sg
 import os
 import threading
 
+
 def to_raw(string):
     return fr"{string}"
 
@@ -33,6 +34,7 @@ def download_video(video):
     if best_video.extension != 'mp4':
         convert_format(title, extension, "mp4")
         os.remove(title + '.' + extension)
+    window.write_event_value('-THREAD DONE-', 0)
 
 
 def download_audio(video):
@@ -43,6 +45,7 @@ def download_audio(video):
     if audio.extension != 'mp3':
         convert_format(title, extension, "mp3")
         os.remove(title + '.' + extension)
+    window.write_event_value('-THREAD DONE-', 0)
 
 
 layout = [[sg.Text('Enter video link:'), sg.InputText()],
@@ -70,10 +73,11 @@ if __name__ == '__main__':
                 else:
                     window['-OUTPUT-'].update("Unknown error, please retry")
                     continue
-                window['-OUTPUT-'].update("File successfully downloaded!")
             except Exception as e:
                 print(e)
                 window['-OUTPUT-'].update("Error: invalid link, please retry")
+        if event == '-THREAD DONE-':
+            window['-OUTPUT-'].update("File successfully downloaded!")
 
     window.close()
 
