@@ -1,0 +1,2 @@
+
+pyinstaller --icon=logo.ico -F --onefile --name=Downloader --add-data=logo.ico;. --add-data=ffmpeg.exe;. --noconsole --hidden-import 'pysimplegui','pafy','youtube-dl' main.py 
