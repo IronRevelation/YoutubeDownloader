@@ -9,17 +9,17 @@ def to_raw(string):
 
 
 def remove_bad_characters(string):
-    string = to_raw(video.title)
-    string = string.replace('"', '')
-    string = string.replace('/', '-')
-    string = string.replace('\\', '-')
-    string = string.replace('>', '')
-    string = string.replace('<', '')
-    string = string.replace('|', '-')
-    string = string.replace('?', '')
-    string = string.replace('*', '')
-    string = string.replace(':', ' ')
-    return string
+    temp = to_raw(string)
+    temp = temp.replace('"', '')
+    temp = temp.replace('/', '-')
+    temp = temp.replace('\\', '-')
+    temp = temp.replace('>', '')
+    temp = temp.replace('<', '')
+    temp = temp.replace('|', '-')
+    temp = temp.replace('?', '')
+    temp = temp.replace('*', '')
+    temp = temp.replace(':', ' ')
+    return temp
 
 
 def convert_format(file_name, previous_extension, extension):
@@ -34,7 +34,6 @@ def download_video(video):
     if best_video.extension != 'mp4':
         convert_format(title, extension, "mp4")
         os.remove(title + '.' + extension)
-    window.write_event_value('-THREAD DONE-', 0)
 
 
 def download_audio(video):
@@ -45,7 +44,42 @@ def download_audio(video):
     if audio.extension != 'mp3':
         convert_format(title, extension, "mp3")
         os.remove(title + '.' + extension)
-    window.write_event_value('-THREAD DONE-', 0)
+
+
+def download_single_file(video, type):
+    if type == 'Video':
+        download_video(video)
+    elif type == 'Audio':
+        download_audio(video)
+    else:
+        window['-OUTPUT-'].update("Unknown error, please retry")
+        return
+    window.write_event_value('-THREAD DONE-', remove_bad_characters(video.title))
+
+
+def download_playlist(playlist, type):
+    pl_title = remove_bad_characters(playlist['title'])
+
+    if not os.path.exists(pl_title):
+        os.makedirs(pl_title)
+
+    for video in playlist['items']:
+        if type == 'Video':
+            download_video(video['pafy'])
+            try:
+                os.rename(video['pafy'].title+'.mp4', pl_title + '\\'+video['pafy'].title+'.mp4')
+            except:
+                os.remove(video['pafy'].title+'.mp4')
+        elif type == 'Audio':
+            download_audio(video['pafy'])
+            try:
+                os.rename(video['pafy'].title + '.mp3', pl_title + '\\' + video['pafy'].title + '.mp3')
+            except:
+                os.remove(video['pafy'].title+'.mp4')
+        else:
+            window['-OUTPUT-'].update("Unknown error, please retry")
+            return
+    window.write_event_value('-THREAD DONE-', "playlist")
 
 
 layout = [[sg.Text('Enter video link:'), sg.InputText()],
@@ -64,20 +98,20 @@ if __name__ == '__main__':
             window['-OUTPUT-'].update("Downloading...")
             try:
                 video = pafy.new(values[0])
-                if values[1] == 'Video':
-                    t1 = threading.Thread(target=download_video, args=(video,), daemon=True)
-                    t1.start()
-                elif values[1] == 'Audio':
-                    t1 = threading.Thread(target=download_audio, args=(video,), daemon=True)
-                    t1.start()
-                else:
-                    window['-OUTPUT-'].update("Unknown error, please retry")
-                    continue
+                t1 = threading.Thread(target=download_single_file, args=(video,values[1]), daemon=True)
+                t1.start()
             except Exception as e:
                 print(e)
-                window['-OUTPUT-'].update("Error: invalid link, please retry")
+                try:
+                    playlist = pafy.get_playlist(values[0])
+                    t1 = threading.Thread(target=download_playlist, args=(playlist, values[1]), daemon=True)
+                    t1.start()
+                except Exception as ex:
+                    print(ex)
+                    window['-OUTPUT-'].update("Error: invalid link, please retry")
         if event == '-THREAD DONE-':
-            window['-OUTPUT-'].update("File successfully downloaded!")
+            window['-OUTPUT-'].update("")
+            sg.popup_non_blocking(str(values['-THREAD DONE-'])+' successfully downloaded', icon="logo.ico")
 
     window.close()
 
