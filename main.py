@@ -2,6 +2,13 @@ import pafy
 import PySimpleGUI as sg
 import os
 import threading
+import sys
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
 
 
 def to_raw(string):
@@ -23,7 +30,7 @@ def remove_bad_characters(string):
 
 
 def convert_format(file_name, previous_extension, extension):
-    os.system('ffmpeg.exe -y -i "' + file_name + '.' + previous_extension + '" "' + file_name + '.' + extension + '"')
+    os.system(resource_path('ffmpeg.exe') + ' -y -i "' + file_name + '.' + previous_extension + '" "' + file_name + '.' + extension + '"')
 
 
 def download_video(video):
@@ -75,7 +82,7 @@ def download_playlist(playlist, type):
             try:
                 os.rename(video['pafy'].title + '.mp3', pl_title + '\\' + video['pafy'].title + '.mp3')
             except:
-                os.remove(video['pafy'].title+'.mp4')
+                os.remove(video['pafy'].title+'.mp3')
         else:
             window['-OUTPUT-'].update("Unknown error, please retry")
             return
@@ -86,10 +93,11 @@ layout = [[sg.Text('Enter video link:'), sg.InputText()],
               [sg.Text('Select type:'), sg.Combo(['Video', 'Audio'], default_value='Video', readonly=True)],
               [sg.Text(size=(40, 1), key='-OUTPUT-')],
               [sg.Button('Download'), sg.Button('Quit')]]
-window = sg.Window('Youtube downloader', layout, icon="logo.ico")
+window = sg.Window('Youtube downloader', layout, icon=resource_path("logo.ico"))
 
 
 if __name__ == '__main__':
+    print(resource_path("logo.ico"))
     while True:
         event, values = window.read()
         if event == sg.WIN_CLOSED or event == 'Quit':
